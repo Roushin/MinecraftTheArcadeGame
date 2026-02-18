@@ -3,124 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcade Quest Companion</title>
+    <title>Arcade Quest Multi-Player</title>
     <style>
-        :root {
-            --mc-green: #388E3C;
-            --mc-dirt: #5D4037;
-            --mc-stone: #424242;
-            --mc-red: #D32F2F;
-        }
-        body {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #1a1a1a;
-            color: white;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 400px;
-            margin: auto;
-            border: 4px solid var(--mc-stone);
-            background-color: #333;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        .stat-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #000;
-            padding: 15px;
-            margin-bottom: 10px;
-            border: 2px solid var(--mc-stone);
-        }
-        .hp-text { color: var(--mc-red); font-size: 24px; font-weight: bold; }
-        .em-text { color: #4CAF50; font-size: 24px; font-weight: bold; }
-        
-        button {
-            background: var(--mc-stone);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            font-size: 20px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        button:active { background: #666; }
-
-        .rules-ref {
-            text-align: left;
-            font-size: 0.9em;
-            background: #222;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 15px;
-        }
-        .rule-item { margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 4px; }
-        h2 { color: #FFD700; margin-top: 0; }
+        :root { --mc-green: #388E3C; --mc-dirt: #5D4037; --mc-stone: #424242; --mc-red: #D32F2F; --mc-gold: #FFD700; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #1a1a1a; color: white; text-align: center; margin: 0; padding: 10px; }
+        .setup-screen { padding: 50px 20px; }
+        .player-card { background: #333; border: 3px solid var(--mc-stone); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        .player-name { font-size: 1.2em; font-weight: bold; color: var(--mc-gold); margin-bottom: 10px; display: block; }
+        .controls { display: flex; justify-content: space-around; align-items: center; }
+        .stat-group { flex: 1; }
+        .val { font-size: 28px; font-weight: bold; display: block; margin: 5px 0; }
+        .hp-val { color: var(--mc-red); }
+        .em-val { color: #4CAF50; }
+        button { background: var(--mc-stone); color: white; border: none; padding: 10px 15px; font-size: 18px; cursor: pointer; border-radius: 6px; touch-action: manipulation; }
+        .btn-small { padding: 5px 12px; }
+        .hidden { display: none; }
+        .rules-bar { background: #222; padding: 10px; font-size: 0.8em; text-align: left; border-radius: 8px; margin-top: 20px; border-left: 4px solid var(--mc-gold); }
+        select { padding: 10px; font-size: 18px; border-radius: 5px; width: 80%; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>QUEST TRACKER</h2>
+    <div id="setup" class="setup-screen">
+        <h1 style="color:var(--mc-gold)">ARCADE QUEST</h1>
+        <p>Select Number of Heroes:</p>
+        <select id="playerCount">
+            <option value="1">1 Player</option>
+            <option value="2">2 Players</option>
+            <option value="3">3 Players</option>
+            <option value="4">4 Players</option>
+        </select><br>
+        <button onclick="startGame()" style="background:var(--mc-green); width: 80%; padding: 20px;">START ADVENTURE</button>
+    </div>
 
-    <div class="stat-box">
-        <div>❤️ HP</div>
-        <div class="hp-text" id="hp">20</div>
-        <div>
-            <button onclick="changeHP(-1)">-</button>
-            <button onclick="changeHP(1)">+</button>
+    <div id="game" class="hidden">
+        <div id="players-container"></div>
+        
+        <div class="rules-bar">
+            <strong>Armor Card Rule:</strong> If you have an Armor card equipped, reduce incoming <b>d6 damage</b> by 2 before updating your HP.
         </div>
+        
+        <button onclick="location.reload()" style="margin-top:20px; opacity: 0.6; font-size: 14px;">Quit to Menu</button>
     </div>
-
-    <div class="stat-box">
-        <div>💎 EMERALDS</div>
-        <div class="em-text" id="em">0</div>
-        <div>
-            <button onclick="changeEM(-1)">-</button>
-            <button onclick="changeEM(1)">+</button>
-        </div>
-    </div>
-
-    <div class="rules-ref">
-        <h3>Mob Power Reference</h3>
-        <div class="rule-item">🟢/🔵 <b>Uno Card:</b> Num + 5</div>
-        <div class="rule-item">🔴/🟡 <b>Uno Card:</b> Num + 10</div>
-        <div class="rule-item">⚠️ <b>Action Card:</b> 15 Power</div>
-        <div class="rule-item">👑 <b>Wild Card:</b> 20 Power</div>
-        <div class="rule-item">🛡️ <b>Armor Card:</b> -2 Damage taken</div>
-    </div>
-
-    <button style="margin-top:20px; width:100%; background: var(--mc-red);" onclick="resetGame()">RESET RUN</button>
-</div>
 
 <script>
-    let hp = 20;
-    let em = 0;
+    function startGame() {
+        const count = document.getElementById('playerCount').value;
+        const container = document.getElementById('players-container');
+        document.getElementById('setup').classList.add('hidden');
+        document.getElementById('game').classList.remove('hidden');
 
-    function changeHP(val) {
-        hp = Math.max(0, hp + val);
-        document.getElementById('hp').innerText = hp;
-        if(hp === 0) alert("You Died! Respawning...");
+        for (let i = 1; i <= count; i++) {
+            container.innerHTML += `
+                <div class="player-card">
+                    <span class="player-name">PLAYER ${i}</span>
+                    <div class="controls">
+                        <div class="stat-group">
+                            <span>❤️ HP</span>
+                            <span class="val hp-val" id="hp-${i}">20</span>
+                            <button class="btn-small" onclick="update(${i}, 'hp', -1)">-</button>
+                            <button class="btn-small" onclick="update(${i}, 'hp', 1)">+</button>
+                        </div>
+                        <div style="width: 2px; height: 50px; background: #444;"></div>
+                        <div class="stat-group">
+                            <span>💎 EM</span>
+                            <span class="val em-val" id="em-${i}">0</span>
+                            <button class="btn-small" onclick="update(${i}, 'em', -1)">-</button>
+                            <button class="btn-small" onclick="update(${i}, 'em', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
     }
 
-    function changeEM(val) {
-        em = Math.max(0, em + val);
-        document.getElementById('em').innerText = em;
-    }
-
-    function resetGame() {
-        if(confirm("Start a new dungeon run?")) {
-            hp = 20;
-            em = 0;
-            document.getElementById('hp').innerText = hp;
-            document.getElementById('em').innerText = em;
+    function update(pId, stat, change) {
+        const el = document.getElementById(`${stat}-${pId}`);
+        let cur = parseInt(el.innerText);
+        let newVal = Math.max(0, cur + change);
+        el.innerText = newVal;
+        if (stat === 'hp' && newVal === 0) {
+            alert(`Player ${pId} has fallen!`);
         }
     }
 </script>
-
 </body>
 </html>
