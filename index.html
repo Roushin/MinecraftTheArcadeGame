@@ -3,47 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcade Quest Multi-Player</title>
+    <title>Arcade Quest: Legend Edition</title>
     <style>
-        :root { --mc-green: #388E3C; --mc-dirt: #5D4037; --mc-stone: #424242; --mc-red: #D32F2F; --mc-gold: #FFD700; }
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #1a1a1a; color: white; text-align: center; margin: 0; padding: 10px; }
-        .setup-screen { padding: 50px 20px; }
-        .player-card { background: #333; border: 3px solid var(--mc-stone); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
-        .player-name { font-size: 1.2em; font-weight: bold; color: var(--mc-gold); margin-bottom: 10px; display: block; }
-        .controls { display: flex; justify-content: space-around; align-items: center; }
-        .stat-group { flex: 1; }
-        .val { font-size: 28px; font-weight: bold; display: block; margin: 5px 0; }
-        .hp-val { color: var(--mc-red); }
-        .em-val { color: #4CAF50; }
-        button { background: var(--mc-stone); color: white; border: none; padding: 10px 15px; font-size: 18px; cursor: pointer; border-radius: 6px; touch-action: manipulation; }
-        .btn-small { padding: 5px 12px; }
+        :root { --mc-green: #47a036; --mc-stone: #3c3c3c; --mc-red: #ff3131; --mc-gold: #fdb813; --mc-blue: #2eb6ff; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; margin: 0; padding: 10px; }
+        
+        /* Dice Animation */
+        .dice-container { background: #222; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--mc-stone); }
+        .dice-display { display: flex; justify-content: center; gap: 20px; margin-bottom: 10px; }
+        .die { width: 60px; height: 60px; background: white; color: black; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; border: 4px solid #999; transition: transform 0.2s; }
+        .die.d20 { background: var(--mc-blue); color: white; border-color: #007bbd; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+        .rolling { animation: shake 0.3s infinite; }
+        @keyframes shake { 0% { transform: rotate(5deg); } 50% { transform: rotate(-5deg); } 100% { transform: rotate(5deg); } }
+
+        /* Navigation */
+        .tab-container { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab { flex: 1; padding: 10px; background: #333; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; border-bottom: 3px solid transparent; }
+        .active-tab { background: #444; border-bottom-color: var(--mc-gold); }
+
+        /* Player Cards */
+        .player-card { background: #1e1e1e; border: 2px solid #333; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .stat-row { display: flex; justify-content: space-around; margin: 10px 0; }
+        .stat-item { text-align: center; }
+        .icon { font-size: 20px; display: block; margin-bottom: 5px; }
+        
+        button { background: #444; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .roll-btn { background: var(--mc-green); width: 100%; padding: 12px; font-size: 16px; margin-top: 5px; box-shadow: 0 4px #2d6622; }
+        .roll-btn:active { transform: translateY(2px); box-shadow: none; }
+        .action-btn { background: #333; border: 1px solid #555; width: 100%; margin-top: 8px; color: var(--mc-gold); font-size: 11px; }
+
         .hidden { display: none; }
-        .rules-bar { background: #222; padding: 10px; font-size: 0.8em; text-align: left; border-radius: 8px; margin-top: 20px; border-left: 4px solid var(--mc-gold); }
-        select { padding: 10px; font-size: 18px; border-radius: 5px; width: 80%; margin-bottom: 20px; }
+        .log-entry { font-size: 12px; padding: 6px; border-bottom: 1px solid #222; text-align: left; }
     </style>
 </head>
 <body>
 
-    <div id="setup" class="setup-screen">
-        <h1 style="color:var(--mc-gold)">ARCADE QUEST</h1>
-        <p>Select Number of Heroes:</p>
-        <select id="playerCount">
-            <option value="1">1 Player</option>
-            <option value="2">2 Players</option>
-            <option value="3">3 Players</option>
-            <option value="4">4 Players</option>
-        </select><br>
-        <button onclick="startGame()" style="background:var(--mc-green); width: 80%; padding: 20px;">START ADVENTURE</button>
+    <div id="setup" style="padding: 100px 20px;">
+        <h1 style="color:var(--mc-gold); letter-spacing: 2px;">ARCADE QUEST</h1>
+        <select id="playerCount" style="width:100%; padding:15px; background:#333; color:white; border-radius:8px; margin-bottom:20px;">
+            <option value="1">1 PLAYER</option><option value="2">2 PLAYERS</option><option value="3">3 PLAYERS</option><option value="4">4 PLAYERS</option>
+        </select>
+        <button onclick="startGame()" style="background:var(--mc-green); width:100%; padding:15px;">START ADVENTURE</button>
     </div>
 
     <div id="game" class="hidden">
-        <div id="players-container"></div>
-        
-        <div class="rules-bar">
-            <strong>Armor Card Rule:</strong> If you have an Armor card equipped, reduce incoming <b>d6 damage</b> by 2 before updating your HP.
+        <div class="dice-container">
+            <div class="dice-display">
+                <div id="d20" class="die d20">20</div>
+                <div id="d6" class="die">6</div>
+            </div>
+            <button class="roll-btn" onclick="rollDice()">🎲 ROLL ALL DICE</button>
         </div>
-        
-        <button onclick="location.reload()" style="margin-top:20px; opacity: 0.6; font-size: 14px;">Quit to Menu</button>
+
+        <div class="tab-container">
+            <div id="t1" class="tab active-tab" onclick="showTab('trackers')">HEROES</div>
+            <div id="t2" class="tab" onclick="showTab('rules')">GUIDE</div>
+            <div id="t3" class="tab" onclick="showTab('history')">LOG</div>
+        </div>
+
+        <div id="trackers-view">
+            <div id="players-container"></div>
+        </div>
+
+        <div id="rules-view" class="hidden" style="text-align:left; background:#1e1e1e; padding:15px; border-radius:12px;">
+            <p>⚔️ <b>Attack:</b> d20 + Arcade Bonus vs Mob Power</p>
+            <p>🛡️ <b>Defend:</b> Fail = Lose d6 HP (Armor -2)</p>
+            <p>🟢 <b>Easy:</b> Num+5 | 🔴 <b>Elite:</b> Num+10</p>
+        </div>
+
+        <div id="history-view" class="hidden" id="log-content" style="background:#1e1e1e; padding:10px; border-radius:12px; min-height:200px;">
+            <div id="log-list"></div>
+        </div>
     </div>
 
 <script>
@@ -56,35 +86,68 @@
         for (let i = 1; i <= count; i++) {
             container.innerHTML += `
                 <div class="player-card">
-                    <span class="player-name">PLAYER ${i}</span>
-                    <div class="controls">
-                        <div class="stat-group">
-                            <span>❤️ HP</span>
-                            <span class="val hp-val" id="hp-${i}">20</span>
-                            <button class="btn-small" onclick="update(${i}, 'hp', -1)">-</button>
-                            <button class="btn-small" onclick="update(${i}, 'hp', 1)">+</button>
+                    <strong style="color:var(--mc-gold)">HERO ${i}</strong>
+                    <div class="stat-row">
+                        <div class="stat-item">
+                            <span class="icon">❤️</span>
+                            <span class="val" id="hp-${i}" style="color:var(--mc-red)">20</span>
+                            <button onclick="update(${i}, 'hp', -1)">-</button><button onclick="update(${i}, 'hp', 1)">+</button>
                         </div>
-                        <div style="width: 2px; height: 50px; background: #444;"></div>
-                        <div class="stat-group">
-                            <span>💎 EM</span>
-                            <span class="val em-val" id="em-${i}">0</span>
-                            <button class="btn-small" onclick="update(${i}, 'em', -1)">-</button>
-                            <button class="btn-small" onclick="update(${i}, 'em', 1)">+</button>
+                        <div class="stat-item">
+                            <span class="icon">💎</span>
+                            <span class="val" id="em-${i}" style="color:var(--mc-green)">0</span>
+                            <button onclick="update(${i}, 'em', -1)">-</button><button onclick="update(${i}, 'em', 1)">+</button>
                         </div>
                     </div>
-                </div>
-            `;
+                    <button class="action-btn" onclick="logVictory(${i})">⚔️ LOG VICTORY</button>
+                </div>`;
         }
+    }
+
+    function rollDice() {
+        const d20 = document.getElementById('d20');
+        const d6 = document.getElementById('d6');
+        d20.classList.add('rolling');
+        d6.classList.add('rolling');
+
+        setTimeout(() => {
+            const r20 = Math.floor(Math.random() * 20) + 1;
+            const r6 = Math.floor(Math.random() * 6) + 1;
+            d20.innerText = r20;
+            d6.innerText = r6;
+            d20.classList.remove('rolling');
+            d6.classList.remove('rolling');
+            addLog(`Rolled: [d20: ${r20}] [d6: ${r6}]`, '');
+        }, 600);
+    }
+
+    function showTab(type) {
+        document.getElementById('trackers-view').className = type === 'trackers' ? '' : 'hidden';
+        document.getElementById('rules-view').className = type === 'rules' ? '' : 'hidden';
+        document.getElementById('history-view').className = type === 'history' ? '' : 'hidden';
+        document.querySelectorAll('.tab').forEach((t, i) => t.classList.remove('active-tab'));
+        event.target.classList.add('active-tab');
     }
 
     function update(pId, stat, change) {
         const el = document.getElementById(`${stat}-${pId}`);
-        let cur = parseInt(el.innerText);
-        let newVal = Math.max(0, cur + change);
+        let newVal = Math.max(0, parseInt(el.innerText) + change);
         el.innerText = newVal;
-        if (stat === 'hp' && newVal === 0) {
-            alert(`Player ${pId} has fallen!`);
-        }
+        if(change < 0) addLog(`Hero ${pId} took damage / spent ${stat}`, 'color:var(--mc-red)');
+    }
+
+    function logVictory(pId) {
+        const mob = prompt("What mob did you defeat?");
+        if(mob) addLog(`Hero ${pId} defeated ${mob}!`, 'color:var(--mc-green)');
+    }
+
+    function addLog(msg, style) {
+        const list = document.getElementById('log-list');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.style = style;
+        entry.innerHTML = `> ${msg}`;
+        list.prepend(entry);
     }
 </script>
 </body>
